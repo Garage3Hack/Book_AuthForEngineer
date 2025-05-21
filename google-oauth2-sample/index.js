@@ -38,7 +38,13 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
 // ルーティング
-app.get('/', (req, res) => res.render('index', { user: req.user }));
+app.get('/', (req, res) => {
+  if (req.user) {
+    // ログインしている場合はホームにリダイレクト
+    res.redirect('/home');
+  }
+  res.render('login', { user: req.user })
+});
 
 app.get('/auth/google',
   passport.authenticate('google', { 
@@ -59,6 +65,9 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
+  if (!req.user) {
+    res.redirect('/');
+  }
   res.render('home', { 
     user: req.user,
     debugInfo: JSON.stringify(req.user, null, 2)
