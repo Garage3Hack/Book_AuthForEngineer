@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cognito認証アプリ</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; }
+    .container { background: #f5f5f5; padding: 20px; border-radius: 4px; }
+    .btn { background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-danger { background: #dc3545; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cognito認証アプリ</h1>
+    <div id="authContent">
+      <p>認証状態を確認中...</p>
+    </div>
+  </div>
+
+  <script>
+    // ユーザー情報を取得する関数
+    async function fetchUserInfo() {
+      const idToken = localStorage.getItem('idToken');
+      if (!idToken) {
+        window.location.href = '/login';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user', {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            document.getElementById('authContent').innerHTML = `
+              <h2>ようこそ、${data.user.name || data.user.username}さん！</h2>
+              <div>
+                <p><strong>ユーザー名(ID):</strong> ${data.user.username}</p>
+                <p><strong>名前:</strong> ${data.user.name || '未設定'}</p>
+              </div>
+              <button onclick="handleLogout()" class="btn btn-danger">ログアウト</button>
+            `;
+          }
+        } else {
+          localStorage.removeItem('idToken');
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('ユーザー情報の取得に失敗:', error);
+        document.getElementById('authContent').innerHTML = `
+          <p style="color: red;">ユーザー情報の取得に失敗しました</p>
+          <a href="/login" class="btn">ログイン</a>
+        `;
+      }
+    }
+
+    // ログアウト処理
+    function handleLogout() {
+      localStorage.removeItem('idToken');
+      window.location.href = '/login';
+    }
+
+    // ページ読み込み時にユーザー情報を取得
+    fetchUserInfo();
+  </script>
+</body>
+</html>
